@@ -1,0 +1,125 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.8/schema.json",
+
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "root": "../",
+    "useIgnoreFile": true
+  },
+
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!src/shared/types/resources.d.ts"]
+  },
+
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+
+  "linter": {
+    "enabled": true,
+
+    "rules": {
+      "preset": "recommended",
+
+      "a11y": {
+        "noNoninteractiveElementInteractions": "error"
+      },
+
+      "complexity": {
+        "noImplicitCoercions": "error",
+        "noUselessStringConcat": "error",
+        "useSimplifiedLogicExpression": "error"
+      },
+
+      "correctness": {
+        "noNestedComponentDefinitions": "error",
+        "noProcessGlobal": "error",
+        "noReactPropAssignments": "error",
+        "useImportExtensions": "off",
+        "useExhaustiveDependencies": "error",
+        "useJsxKeyInIterable": {
+          "level": "error",
+          "options": {
+            "checkShorthandFragments": true
+          }
+        }
+      },
+
+      "performance": {
+        "noNamespaceImport": "error",
+        "noReExportAll": "error"
+      },
+
+      "style": {
+        "noDefaultExport": "error",
+        "noNestedTernary": "error",
+        "noParameterAssign": "error",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "react": {
+                "importNames": ["default"]
+              }
+            }
+          }
+        },
+        "noSubstr": "error",
+        "noNegationElse": "error",
+        "noUselessElse": "error",
+        "useAtIndex": "error",
+        "useBlockStatements": "error",
+        "useCollapsedElseIf": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "useConsistentCurlyBraces": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "error",
+          "options": {
+            "style": "type"
+          }
+        },
+        "useDefaultParameterLast": "error",
+        "useExplicitLengthCheck": "error",
+        "useNumericSeparators": "error",
+        "useReactFunctionComponents": "error",
+        "useSelfClosingElements": "error",
+        "useShorthandAssign": "error",
+        "useThrowNewError": "error"
+      },
+
+      "suspicious": {
+        "noConsole": "warn",
+        "noEmptyBlockStatements": "error"
+      }
+    }
+  },
+
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  }
+}

@@ -1,5 +1,3 @@
 export function App() {
-  return (
-    <p>Data Room</p>
-  )
+  return <p>Data Room</p>;
 }
