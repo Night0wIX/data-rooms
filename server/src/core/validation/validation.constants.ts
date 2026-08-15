@@ -1,1 +1,1 @@
-export const VALIDATION_FAILED_MESSAGE = 'Validation failed';
+export const VALIDATION_FAILED_MESSAGE = "Validation failed";

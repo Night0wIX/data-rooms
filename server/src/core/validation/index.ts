@@ -1,1 +1,1 @@
-export {createValidationPipe} from "./validation.js"
+export { createValidationPipe } from "./validation.js";

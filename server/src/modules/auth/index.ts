@@ -1,1 +1,1 @@
-export {AuthModule} from "./auth.module.js"
+export { AuthModule } from "./auth.module.js";

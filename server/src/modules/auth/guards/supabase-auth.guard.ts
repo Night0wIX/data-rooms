@@ -1,9 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { env } from '@/core/config/env/index.js';
-import { BEARER_PREFIX, IS_PUBLIC_KEY, SUPABASE_JWKS_PATH } from '../auth.constants.js';
-import type { AuthenticatedRequest, SupabaseJwtPayload } from '../auth.types.js';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+import { env } from "@/core/config/env/index.js";
+import { BEARER_PREFIX, IS_PUBLIC_KEY, SUPABASE_JWKS_PATH } from "../auth.constants.js";
+import type { AuthenticatedRequest, SupabaseJwtPayload } from "../auth.types.js";
 
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
@@ -33,7 +33,7 @@ export class SupabaseAuthGuard implements CanActivate {
     const header = request.headers.authorization;
 
     if (!header?.startsWith(BEARER_PREFIX)) {
-      throw new UnauthorizedException('Missing bearer token');
+      throw new UnauthorizedException("Missing bearer token");
     }
 
     return header.slice(BEARER_PREFIX.length);
@@ -44,7 +44,7 @@ export class SupabaseAuthGuard implements CanActivate {
       const { payload } = await jwtVerify(token, this.jwks);
       return payload as SupabaseJwtPayload;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException("Invalid or expired token");
     }
   }
 }

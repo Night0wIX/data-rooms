@@ -1,1 +1,1 @@
-export {ROUTES, API_PREFIX} from "./routes.js"
+export { ROUTES, API_PREFIX } from "./routes.js";

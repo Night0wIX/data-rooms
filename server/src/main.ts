@@ -9,8 +9,8 @@ import { API_PREFIX } from "@/shared/constants/index.js";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const httpAdapterHost = app.get(HttpAdapterHost);
-  const globalFilter = new GlobalExceptionFilter(httpAdapterHost)
-  const validationPipe = createValidationPipe()
+  const globalFilter = new GlobalExceptionFilter(httpAdapterHost);
+  const validationPipe = createValidationPipe();
 
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalFilters(globalFilter);
