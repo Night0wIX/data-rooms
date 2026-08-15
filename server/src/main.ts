@@ -3,12 +3,18 @@ import { AppModule } from "@/app.module.js";
 import { env } from "@/core/config/env/index.js";
 import { HttpAdapterHost } from "@nestjs/core";
 import { GlobalExceptionFilter } from "@/core/filter/index.js";
+import { createValidationPipe } from "@/core/validation/index.js";
+import { API_PREFIX } from "@/shared/constants/index.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const httpAdapterHost = app.get(HttpAdapterHost);
+  const globalFilter = new GlobalExceptionFilter(httpAdapterHost)
+  const validationPipe = createValidationPipe()
 
-  app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
+  app.setGlobalPrefix(API_PREFIX);
+  app.useGlobalFilters(globalFilter);
+  app.useGlobalPipes(validationPipe);
 
   await app.listen(env.PORT);
 }

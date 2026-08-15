@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common";
 import { HttpAdapterHost } from "@nestjs/core";
-import { Prisma } from "../../../generated/prisma/client.js";
+import { Prisma } from "@/generated/prisma/client.js";
 import { ERROR_MESSAGES, PRISMA_ERROR_CODES } from "./filter.constants.js";
 import type { AppErrorResponse } from "./filter.types.js";
 import { hasProperty, isObject, isString } from "@/shared/types/index.js";

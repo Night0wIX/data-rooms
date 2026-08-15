@@ -8,4 +8,7 @@ export const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.url(),
+
+  // Supabase
+  SUPABASE_URL: z.url(),
 });
