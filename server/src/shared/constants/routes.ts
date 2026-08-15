@@ -15,4 +15,12 @@ export const ROUTES = {
     children: ":folderId/children",
     breadcrumb: ":folderId/breadcrumb",
   },
+  files: {
+    root: "files",
+    byId: ":fileId",
+    initUpload: "upload/init",
+    completeUpload: ":fileId/upload/complete",
+    move: ":fileId/move",
+    downloadUrl: ":fileId/download-url",
+  },
 } as const;

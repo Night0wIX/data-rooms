@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { CurrentUser } from "@/modules/auth/decorators/current-user.decorator.js";
 import type { AuthenticatedUser } from "@/modules/auth/auth.types.js";
 import { ROUTES } from "@/shared/constants/routes.js";
@@ -8,10 +19,14 @@ import { CreateFolderDto } from "./dto/create-folder.dto.js";
 import { ListFoldersQueryDto } from "./dto/list-folders-query.dto.js";
 import { BreadcrumbItemDto } from "./dto/breadcrumb-item.dto.js";
 import { UpdateFolderDto } from "./dto/update-folder.dto.js";
+import { FileService } from "../file/file.service.js";
 
 @Controller(ROUTES.folders.root)
 export class FolderController {
-  constructor(private readonly folderService: FolderService) {}
+  constructor(
+    private readonly folderService: FolderService,
+    private readonly fileService: FileService,
+  ) {}
 
   @Post()
   createFolder(
@@ -52,5 +67,20 @@ export class FolderController {
     @Body() updateFolderDto: UpdateFolderDto,
   ): Promise<FolderResponseDto> {
     return this.folderService.renameFolder(folderId, authenticatedUser.id, updateFolderDto);
+  }
+
+  @Delete(ROUTES.folders.byId)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteFolder(
+    @Param("folderId") folderId: string,
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+  ): Promise<void> {
+    const { deletedFolderIds } = await this.folderService.deleteFolder(
+      folderId,
+      authenticatedUser.id,
+    );
+
+    await this.fileService.deleteFilesInFolders(deletedFolderIds);
+    await this.folderService.deleteFolderRecords(deletedFolderIds);
   }
 }

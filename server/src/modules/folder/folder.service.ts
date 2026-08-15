@@ -119,6 +119,24 @@ export class FolderService {
     };
   }
 
+  async deleteFolder(
+    folderId: string,
+    requestingUserId: string,
+  ): Promise<{ deletedFolderIds: string[] }> {
+    await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+
+    const subtreeFolderIds = await this.folderRepository.findSubtreeFolderIds(folderId);
+
+    return { deletedFolderIds: subtreeFolderIds };
+  }
+
+  async deleteFolderRecords(folderIds: string[]): Promise<void> {
+    // Deepest folders first to satisfy the Restrict FK from child to parent.
+    for (const id of [...folderIds].reverse()) {
+      await this.folderRepository.deleteFolderById(id);
+    }
+  }
+
   private async findFolderInDataRoomOrThrow(folderId: string, dataRoomId: string) {
     const folder = await this.folderRepository.findFolderById(folderId);
 

@@ -11,4 +11,5 @@ export const envSchema = z.object({
 
   // Supabase
   SUPABASE_URL: z.url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string(),
 });
