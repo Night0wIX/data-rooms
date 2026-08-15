@@ -15,7 +15,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  dataRooms DataRoom[]
+  dataRooms     DataRoom[]
+  uploadedFiles File[]
 
   @@map("users")
 }
@@ -30,6 +31,7 @@ model DataRoom {
   updatedAt   DateTime @updatedAt
 
   folders Folder[]
+  files   File[]
 
   @@index([ownerId])
   @@map("data_rooms")
@@ -46,9 +48,42 @@ model Folder {
   updatedAt  DateTime @updatedAt
 
   children Folder[] @relation("FolderChildren")
+  files    File[]
 
   @@unique([dataRoomId, parentId, name])
   @@index([dataRoomId, parentId])
   @@index([parentId])
   @@map("folders")
+}
+
+enum FileStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+model File {
+  id       String @id @default(uuid())
+  folderId String
+  folder   Folder @relation(fields: [folderId], references: [id], onDelete: Restrict)
+
+  dataRoomId String
+  dataRoom   DataRoom @relation(fields: [dataRoomId], references: [id], onDelete: Restrict)
+
+  displayName String
+  storageKey  String     @unique
+  mimeType    String
+  sizeBytes   Int
+  status      FileStatus @default(PENDING)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([folderId, displayName])
+  @@index([dataRoomId, createdAt])
+  @@index([folderId, createdAt])
+  @@map("files")
 }
