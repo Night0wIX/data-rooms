@@ -5,4 +5,8 @@ export const ROUTES = {
     root: "users",
     currentUser: "me",
   },
+  dataRoom: {
+    root: "data-room",
+    byId: ":dataRoomId",
+  },
 } as const;
