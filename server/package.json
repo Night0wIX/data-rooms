@@ -1,14 +1,27 @@
 {
-  "name": "server",
+  "name": "data-room-server",
+  "description": "Backend API for a full-stack virtual Data Room application.",
+  "main": "dist/main.js",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.18.0",
+    "pnpm": ">=11.9.0"
+  },
   "scripts": {
-    "build": "nest build --config nest-cli.production.json",
-    "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main.js",
+    "build": "nest build --config nest-cli.production.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
