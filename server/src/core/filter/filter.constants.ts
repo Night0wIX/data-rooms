@@ -1,0 +1,12 @@
+export const ERROR_MESSAGES = {
+  UNEXPECTED: "Unexpected error",
+  UNIQUE_CONSTRAINT: "Resource already exists",
+  RECORD_NOT_FOUND: "Resource not found",
+  FOREIGN_KEY_CONSTRAINT: "Related resource not found",
+} as const;
+
+export const PRISMA_ERROR_CODES = {
+  UNIQUE_CONSTRAINT: "P2002",
+  RECORD_NOT_FOUND: "P2025",
+  FOREIGN_KEY_CONSTRAINT: "P2003",
+} as const;

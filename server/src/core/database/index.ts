@@ -1,1 +1,1 @@
-export {DatabaseModule} from "./database.module.js"
+export { DatabaseModule } from "./database.module.js";
