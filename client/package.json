@@ -1,12 +1,26 @@
 {
-  "name": "data-room",
+  "name": "data-room-client",
+  "version": "0.1.0",
+  "description": "Frontend application for a full-stack virtual Data Room.",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.18.0",
+    "pnpm": ">=11.9.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "dependencies": {
     "react": "^19.2.8",
