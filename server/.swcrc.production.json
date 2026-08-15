@@ -1,0 +1,11 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "module": {
+    "type": "nodenext"
+  },
+  "jsc": {
+    "baseUrl": "."
+  },
+  "minify": true,
+  "sourceMaps": false
+}

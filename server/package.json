@@ -2,8 +2,9 @@
   "name": "server",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build --config nest-cli.production.json",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -19,6 +20,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
     "@nestjs/cli": "^11.0.0",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.47",
     "@types/node": "^24.0.0",
     "source-map-support": "^0.5.21",
     "tsconfig-paths": "^4.2.0",
