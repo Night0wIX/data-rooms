@@ -41,3 +41,6 @@ Thumbs.db
 # Lockfiles (pnpm is the source of truth)
 package-lock.json
 yarn.lock
+
+# Prisma
+**/generated/prisma

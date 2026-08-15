@@ -12,9 +12,13 @@
     "pnpm": ">=11.9.0"
   },
   "scripts": {
-    "start:dev": "nest start --watch",
-    "start:prod": "node dist/main.js",
-    "build": "nest build --config nest-cli.production.json",
+    "start:dev": "dotenvx run -- nest start --watch",
+    "start:prod": "dotenvx run -- node dist/main.js",
+    "build": "dotenvx run -- prisma generate && nest build --config nest-cli.production.json",
+    "prisma:generate": "dotenvx run -- prisma generate",
+    "prisma:migrate": "dotenvx run -- prisma migrate dev",
+    "prisma:deploy": "dotenvx run -- prisma migrate deploy",
+    "prisma:studio": "dotenvx run -- prisma studio",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
@@ -25,17 +29,22 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "^7.9.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
+    "@dotenvx/dotenvx": "^2.21.0",
     "@nestjs/cli": "^11.0.0",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.47",
     "@types/node": "^24.0.0",
+    "prisma": "^7.9.1",
     "source-map-support": "^0.5.21",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
