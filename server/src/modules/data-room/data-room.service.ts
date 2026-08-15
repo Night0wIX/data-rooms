@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { DataRoomRepository } from "./data-room.repository.js";
 import { CreateDataRoomDto } from "./dto/create-data-room.dto.js";
@@ -51,12 +51,8 @@ export class DataRoomService {
   private async findOwnedDataRoomOrThrow(dataRoomId: string, requestingUserId: string) {
     const dataRoom = await this.dataRoomRepository.findDataRoomById(dataRoomId);
 
-    if (!dataRoom) {
+    if (!dataRoom || dataRoom.ownerId !== requestingUserId) {
       throw new NotFoundException("Data room not found");
-    }
-
-    if (dataRoom.ownerId !== requestingUserId) {
-      throw new ForbiddenException("You do not have access to this data room");
     }
 
     return dataRoom;

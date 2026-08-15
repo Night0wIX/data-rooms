@@ -7,11 +7,11 @@ import { DataRoomResponseDto } from "./dto/data-room-response.dto.js";
 import { CreateDataRoomDto } from "./dto/create-data-room.dto.js";
 import { UpdateDataRoomDto } from "./dto/update-data-room.dto.js";
 
-@Controller()
+@Controller(ROUTES.dataRooms.root)
 export class DataRoomController {
   constructor(private readonly dataRoomService: DataRoomService) {}
 
-  @Post(ROUTES.dataRoom.root)
+  @Post()
   createDataRoom(
     @CurrentUser() authenticatedUser: AuthenticatedUser,
     @Body() createDataRoomDto: CreateDataRoomDto,
@@ -19,14 +19,14 @@ export class DataRoomController {
     return this.dataRoomService.createDataRoom(authenticatedUser.id, createDataRoomDto);
   }
 
-  @Get(ROUTES.dataRoom.root)
+  @Get()
   listDataRooms(
     @CurrentUser() authenticatedUser: AuthenticatedUser,
   ): Promise<DataRoomResponseDto[]> {
     return this.dataRoomService.listDataRoomsForOwner(authenticatedUser.id);
   }
 
-  @Get(ROUTES.dataRoom.byId)
+  @Get(ROUTES.dataRooms.byId)
   getDataRoom(
     @Param("dataRoomId") dataRoomId: string,
     @CurrentUser() authenticatedUser: AuthenticatedUser,
@@ -34,7 +34,7 @@ export class DataRoomController {
     return this.dataRoomService.getDataRoomById(dataRoomId, authenticatedUser.id);
   }
 
-  @Patch(ROUTES.dataRoom.byId)
+  @Patch(ROUTES.dataRooms.byId)
   updateDataRoom(
     @Param("dataRoomId") dataRoomId: string,
     @CurrentUser() authenticatedUser: AuthenticatedUser,

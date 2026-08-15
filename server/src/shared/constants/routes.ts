@@ -5,8 +5,14 @@ export const ROUTES = {
     root: "users",
     currentUser: "me",
   },
-  dataRoom: {
-    root: "data-room",
+  dataRooms: {
+    root: "data-rooms",
     byId: ":dataRoomId",
+  },
+  folders: {
+    root: "folders",
+    byId: ":folderId",
+    children: ":folderId/children",
+    breadcrumb: ":folderId/breadcrumb",
   },
 } as const;
