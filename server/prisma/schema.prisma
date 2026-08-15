@@ -8,6 +8,7 @@ datasource db {
 }
 
 model User {
+  // Supabase Auth user ID.
   id        String   @id
   email     String   @unique
   name      String?
@@ -15,8 +16,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  dataRooms     DataRoom[]
-  uploadedFiles File[]
+  dataRooms      DataRoom[]
+  uploadedFiles  File[]
+  createdShares  Share[]    @relation("ShareCreatedBy")
+  receivedShares Share[]    @relation("ShareGrantedTo")
 
   @@map("users")
 }
@@ -50,7 +53,10 @@ model Folder {
   children Folder[] @relation("FolderChildren")
   files    File[]
 
+  // Unique among siblings; root uniqueness is enforced by the service.
   @@unique([dataRoomId, parentId, name])
+
+  // Supports folder listing by room and parent.
   @@index([dataRoomId, parentId])
   @@index([parentId])
   @@map("folders")
@@ -67,6 +73,7 @@ model File {
   folderId String
   folder   Folder @relation(fields: [folderId], references: [id], onDelete: Restrict)
 
+  // Denormalized for room-wide queries.
   dataRoomId String
   dataRoom   DataRoom @relation(fields: [dataRoomId], references: [id], onDelete: Restrict)
 
@@ -82,8 +89,51 @@ model File {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Prevents duplicate names during concurrent uploads.
   @@unique([folderId, displayName])
+
   @@index([dataRoomId, createdAt])
   @@index([folderId, createdAt])
   @@map("files")
+}
+
+enum ShareResourceType {
+  DATA_ROOM
+  FOLDER
+  FILE
+}
+
+enum ShareType {
+  PUBLIC
+  USER
+}
+
+enum ShareRole {
+  VIEWER
+  EDITOR
+}
+
+model Share {
+  id           String            @id @default(uuid())
+  resourceType ShareResourceType
+  resourceId   String
+
+  shareType ShareType
+  role      ShareRole @default(VIEWER)
+
+  sharedWithUserId String?
+  sharedWithUser   User?   @relation("ShareGrantedTo", fields: [sharedWithUserId], references: [id], onDelete: Cascade)
+
+  token String? @unique
+
+  createdById String
+  createdBy   User      @relation("ShareCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  // Resource integrity is validated by SharingService.
+  @@unique([resourceType, resourceId, sharedWithUserId])
+  @@index([resourceType, resourceId, revokedAt])
+  @@index([sharedWithUserId])
+  @@map("shares")
 }
