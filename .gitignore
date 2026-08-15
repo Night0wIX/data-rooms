@@ -1,1 +1,43 @@
-**/node_modules
+# Logs
+logs
+*.log
+pnpm-debug.log*
+
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Vite cache
+.vite
+.cache
+
+# local files
+*.local
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode
+.idea
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# Lockfiles (pnpm is the source of truth)
+package-lock.json
+yarn.lock
