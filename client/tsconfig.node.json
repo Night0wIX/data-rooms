@@ -1,23 +1,38 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "target": "es2023",
+
+    // Language
+    "target": "ES2023",
     "lib": ["ES2023"],
+
+    // Node
     "types": ["node"],
-    "skipLibCheck": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
-    /* Bundler mode */
-    "module": "nodenext",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
+    // Modules
     "moduleDetection": "force",
-    "noEmit": true,
+    "verbatimModuleSyntax": true,
 
-    /* Linting */
+    // Type checking
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Unused code
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
+    // TypeScript 6
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+
+    // Build
+    "skipLibCheck": true,
+    "noEmit": true
   },
+
   "include": ["vite.config.ts"]
 }
