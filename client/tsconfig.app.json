@@ -19,6 +19,12 @@
     // Vite
     "types": ["vite/client"],
 
+    // Aliases
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
     // Type checking
     "strict": true,
     "noUncheckedIndexedAccess": true,
