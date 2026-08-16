@@ -1,0 +1,3 @@
+export const DEFAULT_QUERY_STALE_TIME = 300_000; // 5 minutes
+export const DEFAULT_QUERY_RETRY_COUNT = 1;
+export const DEFAULT_MUTATION_RETRY_COUNT = 0;
