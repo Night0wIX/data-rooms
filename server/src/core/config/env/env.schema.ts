@@ -12,4 +12,10 @@ export const envSchema = z.object({
   // Supabase
   SUPABASE_URL: z.url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string(),
+
+  // CORS
+  CORS_ORIGINS: z
+    .string()
+    .default("http://localhost:5173")
+    .transform((value) => value.split(",").map((origin) => origin.trim())),
 });

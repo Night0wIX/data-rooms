@@ -12,6 +12,11 @@ async function bootstrap() {
   const globalFilter = new GlobalExceptionFilter(httpAdapterHost);
   const validationPipe = createValidationPipe();
 
+  app.enableCors({
+    origin: env.CORS_ORIGINS,
+    credentials: true,
+  });
+
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalFilters(globalFilter);
   app.useGlobalPipes(validationPipe);
