@@ -1,37 +1,36 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
-import { DataRoomService } from "@/modules/data-room/index.js";
 import { FolderRepository } from "./folder.repository.js";
 import { CreateFolderDto } from "./dto/create-folder.dto.js";
 import { FolderResponseDto } from "./dto/folder-response.dto.js";
 import { ListFoldersQueryDto } from "./dto/list-folders-query.dto.js";
 import { BreadcrumbItemDto } from "./dto/breadcrumb-item.dto.js";
 import { UpdateFolderDto } from "./dto/update-folder.dto.js";
+import { ShareResourceType } from "@/generated/prisma/enums.js";
+import { AccessService } from "@/modules/sharing/index.js";
 
 @Injectable()
 export class FolderService {
   constructor(
     private readonly folderRepository: FolderRepository,
-    private readonly dataRoomService: DataRoomService,
+    private readonly accessService: AccessService,
   ) {}
 
   async createFolder(
     requestingUserId: string,
     createFolderDto: CreateFolderDto,
   ): Promise<FolderResponseDto> {
-    await this.dataRoomService.getDataRoomById(createFolderDto.dataRoomId, requestingUserId);
+    await this.accessService.assertCanEdit({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.DATA_ROOM,
+      resourceId: createFolderDto.dataRoomId,
+    });
 
     const parentId = createFolderDto.parentFolderId ?? null;
 
     if (parentId) {
       await this.findFolderInDataRoomOrThrow(parentId, createFolderDto.dataRoomId);
     }
-
-    await this.assertNameIsAvailable({
-      dataRoomId: createFolderDto.dataRoomId,
-      parentId,
-      name: createFolderDto.name,
-    });
 
     const folder = await this.folderRepository.createFolder({
       dataRoomId: createFolderDto.dataRoomId,
@@ -46,7 +45,11 @@ export class FolderService {
     requestingUserId: string,
     listFoldersQueryDto: ListFoldersQueryDto,
   ): Promise<FolderResponseDto[]> {
-    await this.dataRoomService.getDataRoomById(listFoldersQueryDto.dataRoomId, requestingUserId);
+    await this.accessService.assertCanView({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.DATA_ROOM,
+      resourceId: listFoldersQueryDto.dataRoomId,
+    });
 
     const parentId = listFoldersQueryDto.parentFolderId ?? null;
 
@@ -63,7 +66,7 @@ export class FolderService {
   }
 
   async getFolderById(folderId: string, requestingUserId: string): Promise<FolderResponseDto> {
-    const folder = await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+    const folder = await this.findViewableFolderOrThrow(folderId, requestingUserId);
 
     return this.toResponseDto(folder);
   }
@@ -72,7 +75,7 @@ export class FolderService {
     folderId: string,
     requestingUserId: string,
   ): Promise<BreadcrumbItemDto[]> {
-    await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+    await this.findViewableFolderOrThrow(folderId, requestingUserId);
 
     const chain = await this.folderRepository.findBreadcrumbChain(folderId);
 
@@ -86,7 +89,7 @@ export class FolderService {
     requestingUserId: string,
     updateFolderDto: UpdateFolderDto,
   ): Promise<FolderResponseDto> {
-    const folder = await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+    const folder = await this.findEditableFolderOrThrow(folderId, requestingUserId);
 
     await this.assertNameIsAvailable({
       dataRoomId: folder.dataRoomId,
@@ -103,11 +106,15 @@ export class FolderService {
     return this.toResponseDto(updatedFolder);
   }
 
+  /**
+   * Returns the number of nested folders and files that would be deleted,
+   * so the caller can surface a confirmation warning before deletion.
+   */
   async previewFolderDeletion(
     folderId: string,
     requestingUserId: string,
   ): Promise<{ folderCount: number; fileCount: number; totalSizeBytes: string }> {
-    await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+    await this.findEditableFolderOrThrow(folderId, requestingUserId);
 
     const subtreeFolderIds = await this.folderRepository.findSubtreeFolderIds(folderId);
     const statistics = await this.folderRepository.computeFolderSubtreeStatistics(folderId);
@@ -119,21 +126,16 @@ export class FolderService {
     };
   }
 
-  async deleteFolder(
-    folderId: string,
-    requestingUserId: string,
-  ): Promise<{ deletedFolderIds: string[] }> {
-    await this.findAccessibleFolderOrThrow(folderId, requestingUserId);
+  async prepareFolderDeletion(folderId: string, requestingUserId: string): Promise<string[]> {
+    await this.findEditableFolderOrThrow(folderId, requestingUserId);
 
-    const subtreeFolderIds = await this.folderRepository.findSubtreeFolderIds(folderId);
-
-    return { deletedFolderIds: subtreeFolderIds };
+    return this.folderRepository.findSubtreeFolderIds(folderId);
   }
 
   async deleteFolderRecords(folderIds: string[]): Promise<void> {
     // Deepest folders first to satisfy the Restrict FK from child to parent.
-    for (const id of [...folderIds].reverse()) {
-      await this.folderRepository.deleteFolderById(id);
+    for (const folderId of [...folderIds].reverse()) {
+      await this.folderRepository.deleteFolderById(folderId);
     }
   }
 
@@ -147,15 +149,34 @@ export class FolderService {
     return folder;
   }
 
-  private async findAccessibleFolderOrThrow(folderId: string, requestingUserId: string) {
+  private async findViewableFolderOrThrow(folderId: string, requestingUserId: string) {
     const folder = await this.folderRepository.findFolderById(folderId);
 
     if (!folder) {
       throw new NotFoundException("Folder not found");
     }
 
-    // TODO: replace with AccessService.assertCanView('FOLDER', folderId) once the sharing module exists.
-    await this.dataRoomService.getDataRoomById(folder.dataRoomId, requestingUserId);
+    await this.accessService.assertCanView({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FOLDER,
+      resourceId: folderId,
+    });
+
+    return folder;
+  }
+
+  private async findEditableFolderOrThrow(folderId: string, requestingUserId: string) {
+    const folder = await this.folderRepository.findFolderById(folderId);
+
+    if (!folder) {
+      throw new NotFoundException("Folder not found");
+    }
+
+    await this.accessService.assertCanEdit({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FOLDER,
+      resourceId: folderId,
+    });
 
     return folder;
   }

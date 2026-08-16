@@ -4,11 +4,15 @@ import { DataRoomRepository } from "./data-room.repository.js";
 import { CreateDataRoomDto } from "./dto/create-data-room.dto.js";
 import { DataRoomResponseDto } from "./dto/data-room-response.dto.js";
 import { UpdateDataRoomDto } from "./dto/update-data-room.dto.js";
+import { ShareResourceType } from "@/generated/prisma/enums.js";
+import { AccessService } from "@/modules/sharing/index.js";
 
 @Injectable()
 export class DataRoomService {
-  constructor(private readonly dataRoomRepository: DataRoomRepository) {}
-
+  constructor(
+    private readonly dataRoomRepository: DataRoomRepository,
+    private readonly accessService: AccessService,
+  ) {}
   async createDataRoom(
     ownerId: string,
     createDataRoomDto: CreateDataRoomDto,
@@ -28,7 +32,7 @@ export class DataRoomService {
     dataRoomId: string,
     requestingUserId: string,
   ): Promise<DataRoomResponseDto> {
-    const dataRoom = await this.findOwnedDataRoomOrThrow(dataRoomId, requestingUserId);
+    const dataRoom = await this.findAccessibleDataRoomOrThrow(dataRoomId, requestingUserId);
 
     return this.toResponseDto(dataRoom);
   }
@@ -48,6 +52,36 @@ export class DataRoomService {
     return this.toResponseDto(updatedDataRoom);
   }
 
+  async deleteDataRoom(dataRoomId: string, requestingUserId: string): Promise<void> {
+    await this.findOwnedDataRoomOrThrow(dataRoomId, requestingUserId);
+
+    await this.dataRoomRepository.deleteDataRoom(dataRoomId);
+  }
+
+  /**
+   * View-level access check: passes for the owner and for any user with an
+   * active share (direct or inherited) on this data room.
+   */
+  async findAccessibleDataRoomOrThrow(dataRoomId: string, requestingUserId: string) {
+    const dataRoom = await this.dataRoomRepository.findDataRoomById(dataRoomId);
+
+    if (!dataRoom) {
+      throw new NotFoundException("Data room not found");
+    }
+
+    await this.accessService.assertCanView({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.DATA_ROOM,
+      resourceId: dataRoomId,
+    });
+
+    return dataRoom;
+  }
+
+  /**
+   * Ownership-level check: used for operations that must stay restricted to
+   * the owner regardless of shared access (rename, delete).
+   */
   private async findOwnedDataRoomOrThrow(dataRoomId: string, requestingUserId: string) {
     const dataRoom = await this.dataRoomRepository.findDataRoomById(dataRoomId);
 

@@ -75,12 +75,20 @@ export class FolderController {
     @Param("folderId") folderId: string,
     @CurrentUser() authenticatedUser: AuthenticatedUser,
   ): Promise<void> {
-    const { deletedFolderIds } = await this.folderService.deleteFolder(
+    const folderIdsToDelete = await this.folderService.prepareFolderDeletion(
       folderId,
       authenticatedUser.id,
     );
 
-    await this.fileService.deleteFilesInFolders(deletedFolderIds);
-    await this.folderService.deleteFolderRecords(deletedFolderIds);
+    await this.fileService.deleteFilesInFolders(folderIdsToDelete);
+    await this.folderService.deleteFolderRecords(folderIdsToDelete);
+  }
+
+  @Get(ROUTES.folders.deletionPreview)
+  previewFolderDeletion(
+    @Param("folderId") folderId: string,
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+  ) {
+    return this.folderService.previewFolderDeletion(folderId, authenticatedUser.id);
   }
 }

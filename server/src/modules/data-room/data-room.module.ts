@@ -3,9 +3,10 @@ import { DatabaseModule } from "@/core/database/index.js";
 import { DataRoomController } from "./data-room.controller.js";
 import { DataRoomService } from "./data-room.service.js";
 import { DataRoomRepository } from "./data-room.repository.js";
+import { SharingModule } from "@/modules/sharing/sharing.module.js";
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, SharingModule],
   controllers: [DataRoomController],
   providers: [DataRoomService, DataRoomRepository],
   exports: [DataRoomService],

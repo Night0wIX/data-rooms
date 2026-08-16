@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from "@nestjs/common";
 import { CurrentUser } from "@/modules/auth/decorators/current-user.decorator.js";
 import type { AuthenticatedUser } from "@/modules/auth/auth.types.js";
 import { ROUTES } from "@/shared/constants/index.js";
@@ -43,5 +53,12 @@ export class DataRoomController {
     return this.dataRoomService.updateDataRoom(dataRoomId, authenticatedUser.id, updateDataRoomDto);
   }
 
-  // TODO: add delete logic until folder module completed
+  @Delete(ROUTES.dataRooms.byId)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteDataRoom(
+    @Param("dataRoomId") dataRoomId: string,
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+  ): Promise<void> {
+    return this.dataRoomService.deleteDataRoom(dataRoomId, authenticatedUser.id);
+  }
 }

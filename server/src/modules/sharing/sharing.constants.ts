@@ -1,0 +1,1 @@
+export const SHARE_TOKEN_BYTE_LENGTH = 32;

@@ -12,8 +12,8 @@ export const ROUTES = {
   folders: {
     root: "folders",
     byId: ":folderId",
-    children: ":folderId/children",
     breadcrumb: ":folderId/breadcrumb",
+    deletionPreview: ":folderId/deletion-preview",
   },
   files: {
     root: "files",
@@ -22,5 +22,10 @@ export const ROUTES = {
     completeUpload: ":fileId/upload/complete",
     move: ":fileId/move",
     downloadUrl: ":fileId/download-url",
+  },
+  share: {
+    root: "share",
+    byId: ":shareId",
+    byToken: "public/:token",
   },
 } as const;

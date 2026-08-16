@@ -45,11 +45,11 @@ export class FileRepository {
     return this.databaseService.file.findMany({
       where: {
         dataRoomId: input.dataRoomId,
-        folderId: input.folderId,
         status: FileStatus.READY,
-        displayName: input.searchByName
-          ? { contains: input.searchByName, mode: "insensitive" }
-          : undefined,
+        ...(input.folderId ? { folderId: input.folderId } : {}),
+        ...(input.searchByName
+          ? { displayName: { contains: input.searchByName, mode: "insensitive" } }
+          : {}),
       },
       orderBy: { displayName: "asc" },
     });

@@ -1,12 +1,5 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
-import { FolderRepository } from "@/modules/folder/index.js";
-import { DataRoomService } from "@/modules/data-room/index.js";
 import { FileRepository } from "./file.repository.js";
 import { FileStorageService } from "@/core/storage/index.js";
 import { MAXIMUM_FILE_SIZE_BYTES } from "./file.constants.js";
@@ -17,13 +10,14 @@ import { FileResponseDto } from "./dto/file-response.dto.js";
 import { ListFilesQueryDto } from "./dto/list-files-query.dto.js";
 import { UpdateFileDto } from "./dto/update-file.dto.js";
 import { MoveFileDto } from "./dto/move-file.dto.js";
+import { ShareResourceType } from "@/generated/prisma/enums.js";
+import { AccessService } from "@/modules/sharing/index.js";
 
 @Injectable()
 export class FileService {
   constructor(
     private readonly fileRepository: FileRepository,
-    private readonly folderRepository: FolderRepository,
-    private readonly dataRoomService: DataRoomService,
+    private readonly accessService: AccessService,
     private readonly fileStorageService: FileStorageService,
   ) {}
 
@@ -35,23 +29,17 @@ export class FileService {
       throw new BadRequestException("File exceeds the maximum allowed size");
     }
 
-    const folder = await this.folderRepository.findFolderById(initFileUploadDto.folderId);
+    const folder = await this.fileRepository.findFolderById(initFileUploadDto.folderId);
 
     if (!folder) {
       throw new NotFoundException("Folder not found");
     }
 
-    // Throws NotFoundException if the user cannot access the parent data room.
-    await this.dataRoomService.getDataRoomById(folder.dataRoomId, requestingUserId);
-
-    const existingFile = await this.fileRepository.findFileByFolderAndName({
-      folderId: folder.id,
-      displayName: initFileUploadDto.displayName,
+    await this.accessService.assertCanEdit({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FOLDER,
+      resourceId: folder.id,
     });
-
-    if (existingFile) {
-      throw new ConflictException("A file with this name already exists in this folder");
-    }
 
     const storageKey = this.fileStorageService.buildStorageKey({
       dataRoomId: folder.dataRoomId,
@@ -78,7 +66,7 @@ export class FileService {
   }
 
   async completeFileUpload(fileId: string, requestingUserId: string): Promise<FileResponseDto> {
-    const file = await this.findAccessibleFileOrThrow(fileId, requestingUserId);
+    const file = await this.findEditableFileOrThrow(fileId, requestingUserId);
 
     const objectExists = await this.fileStorageService.confirmObjectExists(file.storageKey);
 
@@ -96,7 +84,11 @@ export class FileService {
     requestingUserId: string,
     listFilesQueryDto: ListFilesQueryDto,
   ): Promise<FileResponseDto[]> {
-    await this.dataRoomService.getDataRoomById(listFilesQueryDto.dataRoomId, requestingUserId);
+    await this.accessService.assertCanView({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.DATA_ROOM,
+      resourceId: listFilesQueryDto.dataRoomId,
+    });
 
     const files = await this.fileRepository.listFiles(listFilesQueryDto);
 
@@ -107,7 +99,7 @@ export class FileService {
     fileId: string,
     requestingUserId: string,
   ): Promise<DownloadUrlResponseDto> {
-    const file = await this.findAccessibleFileOrThrow(fileId, requestingUserId);
+    const file = await this.findViewableFileOrThrow(fileId, requestingUserId);
 
     const downloadUrl = await this.fileStorageService.createSignedDownloadUrl(file.storageKey);
 
@@ -123,7 +115,7 @@ export class FileService {
     requestingUserId: string,
     updateFileDto: UpdateFileDto,
   ): Promise<FileResponseDto> {
-    await this.findAccessibleFileOrThrow(fileId, requestingUserId);
+    await this.findEditableFileOrThrow(fileId, requestingUserId);
 
     const renamedFile = await this.fileRepository.renameFile(fileId, updateFileDto.displayName);
 
@@ -135,9 +127,9 @@ export class FileService {
     requestingUserId: string,
     moveFileDto: MoveFileDto,
   ): Promise<FileResponseDto> {
-    const file = await this.findAccessibleFileOrThrow(fileId, requestingUserId);
+    const file = await this.findEditableFileOrThrow(fileId, requestingUserId);
 
-    const destinationFolder = await this.folderRepository.findFolderById(
+    const destinationFolder = await this.fileRepository.findFolderById(
       moveFileDto.destinationFolderId,
     );
 
@@ -145,13 +137,19 @@ export class FileService {
       throw new NotFoundException("Destination folder not found");
     }
 
+    await this.accessService.assertCanEdit({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FOLDER,
+      resourceId: destinationFolder.id,
+    });
+
     const movedFile = await this.fileRepository.moveFile(fileId, moveFileDto.destinationFolderId);
 
     return this.toResponseDto(movedFile);
   }
 
   async deleteFile(fileId: string, requestingUserId: string): Promise<void> {
-    const file = await this.findAccessibleFileOrThrow(fileId, requestingUserId);
+    const file = await this.findEditableFileOrThrow(fileId, requestingUserId);
 
     await this.fileStorageService.deleteObject(file.storageKey);
     await this.fileRepository.deleteFileById(fileId);
@@ -160,7 +158,10 @@ export class FileService {
   /**
    * Deletes every file belonging to the given folder ids (a folder subtree),
    * removing storage objects first and DB records second. Used by the
-   * folder deletion flow when a folder with nested content is removed.
+   * folder deletion flow. Access is already validated by the caller
+   * (FolderController), since this runs as part of a folder-delete
+   * operation on folders whose ids were resolved from an already-authorized
+   * subtree.
    */
   async deleteFilesInFolders(folderIds: string[]): Promise<void> {
     const files = await this.fileRepository.deleteFilesByFolderIds(folderIds);
@@ -172,15 +173,34 @@ export class FileService {
     await this.fileRepository.deleteManyByFolderIds(folderIds);
   }
 
-  private async findAccessibleFileOrThrow(fileId: string, requestingUserId: string) {
+  private async findViewableFileOrThrow(fileId: string, requestingUserId: string) {
     const file = await this.fileRepository.findFileById(fileId);
 
     if (!file) {
       throw new NotFoundException("File not found");
     }
 
-    // TODO: replace with AccessService.assertCanView('FILE', fileId) once the sharing module exists.
-    await this.dataRoomService.getDataRoomById(file.dataRoomId, requestingUserId);
+    await this.accessService.assertCanView({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FILE,
+      resourceId: fileId,
+    });
+
+    return file;
+  }
+
+  private async findEditableFileOrThrow(fileId: string, requestingUserId: string) {
+    const file = await this.fileRepository.findFileById(fileId);
+
+    if (!file) {
+      throw new NotFoundException("File not found");
+    }
+
+    await this.accessService.assertCanEdit({
+      userId: requestingUserId,
+      resourceType: ShareResourceType.FILE,
+      resourceId: fileId,
+    });
 
     return file;
   }
