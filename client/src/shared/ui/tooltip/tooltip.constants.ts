@@ -1,0 +1,3 @@
+export const TOOLTIP_DEFAULT_DELAY_MS = 300;
+export const TOOLTIP_SKIP_DELAY_MS = 300;
+export const TOOLTIP_DEFAULT_SIDE_OFFSET = 6;
