@@ -11,10 +11,11 @@ export interface FormFieldControlProps {
 export interface FormFieldProps {
   name?: string;
   id?: string;
-  label?: ReactNode;
-  description?: ReactNode;
-  error?: string;
+  label?: string;
+  description?: string;
+  error?: string | undefined;
   required?: boolean;
   className?: string;
-  children: (field: FormFieldControlProps) => ReactNode;
+  action?: ReactNode;
+  children: (controlProps: FormFieldControlProps) => ReactNode;
 }

@@ -1,1 +1,1 @@
-export { queryClient } from "@/app/config/query/query.client";
+export { queryClient } from "./query.client";

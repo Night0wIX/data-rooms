@@ -1,6 +1,11 @@
 import { z } from "zod";
-import { DEFAULT_PORT, DEFAULT_PREVIEW_PORT, ENVIRONMENT, MAX_PORT, MIN_PORT } from "./env.constants";
-
+import {
+  DEFAULT_PORT,
+  DEFAULT_PREVIEW_PORT,
+  ENVIRONMENT,
+  MAX_PORT,
+  MIN_PORT,
+} from "./env.constants";
 
 const portSchema = z.coerce.number().int().min(MIN_PORT).max(MAX_PORT);
 

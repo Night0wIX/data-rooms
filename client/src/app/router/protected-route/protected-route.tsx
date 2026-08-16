@@ -1,13 +1,13 @@
-import { ROUTES } from "@/shared/constants/routes";
 import { Navigate, Outlet } from "react-router-dom";
-
-// TODO: replace with real authentication check (Supabase session)
-const IS_AUTHENTICATED = true;
+import { Loading } from "@/pages/loading";
+import { ROUTES } from "@/shared/constants/routes";
+import { useAuthSession } from "@/features/auth/hooks/use-auth-session";
 
 export function ProtectedRoute() {
-  if (!IS_AUTHENTICATED) {
-    return <Navigate to={ROUTES.login} replace />;
-  }
+  const { isAuthenticated, isInitializing } = useAuthSession();
+
+  if (isInitializing) return <Loading />;
+  if (!isAuthenticated) return <Navigate to={ROUTES.login} replace />;
 
   return <Outlet />;
 }

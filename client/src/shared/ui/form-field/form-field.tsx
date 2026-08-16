@@ -10,6 +10,7 @@ export function FormField({
   error,
   required = false,
   className,
+  action,
   children,
 }: FormFieldProps) {
   const generatedId = useId();
@@ -35,17 +36,20 @@ export function FormField({
   return (
     <div className={cn("space-y-1.5", className)}>
       {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium leading-none text-foreground"
-        >
-          {label}
-          {required && (
-            <span className="ml-0.5 text-destructive" aria-hidden="true">
-              *
-            </span>
-          )}
-        </label>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor={id}
+            className="text-sm font-medium leading-none text-foreground"
+          >
+            {label}
+            {required && (
+              <span className="ml-0.5 text-destructive" aria-hidden="true">
+                *
+              </span>
+            )}
+          </label>
+          {action}
+        </div>
       )}
 
       {children(controlProps)}

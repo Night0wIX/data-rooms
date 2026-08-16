@@ -1,4 +1,4 @@
-import { envSchema } from "@/app/config/env/env.schema";
+import { envSchema } from "./env.schema";
 
 const env = envSchema.parse(import.meta.env);
 

@@ -7,6 +7,7 @@ import { ProtectedRoute } from "./protected-route/protected-route";
 import { PublicRoute } from "./public-route/public-route";
 
 const LoginPage = lazyNamed(() => import("@/pages/login"), "Login");
+const SignUpPage = lazyNamed(() => import("@/pages/sign-up"), "SignUp");
 const DataRoomsListPage = lazyNamed(
   () => import("@/pages/data-rooms"),
   "DataRooms",
@@ -38,7 +39,10 @@ export const router = createBrowserRouter([
       },
       {
         element: <PublicRoute />,
-        children: [{ path: ROUTES.login, element: <LoginPage /> }],
+        children: [
+          { path: ROUTES.login, element: <LoginPage /> },
+          { path: ROUTES.signUp, element: <SignUpPage /> },
+        ],
       },
       { path: ROUTES.publicShare, element: <PublicSharePage /> },
       { path: ROUTES.notFound, element: <NotFoundPage /> },
