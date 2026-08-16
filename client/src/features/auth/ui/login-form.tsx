@@ -56,16 +56,6 @@ export function LoginForm() {
             label="Password"
             required
             error={field.state.meta.errors[0]?.message}
-            action={
-              <button
-                type="button"
-                disabled
-                title="Password recovery isn't available yet"
-                className="cursor-not-allowed text-sm font-medium text-muted-foreground"
-              >
-                Forgot password?
-              </button>
-            }
           >
             {(controlProps) => (
               <Input

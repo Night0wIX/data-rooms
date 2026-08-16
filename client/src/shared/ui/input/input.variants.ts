@@ -2,7 +2,7 @@ import { cva } from "class-variance-authority";
 
 export const inputVariants = cva(
   [
-    "flex w-full min-w-0 rounded-md border border-input bg-transparent shadow-sm outline-none",
+    "flex w-full min-w-0 rounded-md border border-input bg-background shadow-sm outline-none",
     "text-sm text-foreground placeholder:text-muted-foreground",
     "transition-colors",
     "file:border-0 file:bg-transparent file:text-sm file:font-medium",
