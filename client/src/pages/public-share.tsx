@@ -13,6 +13,8 @@ import {
 import { sharingService } from "@/features/sharing/api/sharing.service";
 import type { FileItem } from "@/features/file/api/file.types";
 import { ROUTES } from "@/shared/constants/routes";
+import { useState } from "react";
+import { FilePreviewDialog } from "@/features/file/ui/file-preview-dialog";
 
 function buildPublicSharePath(token: string, folderId?: string) {
   const path = generatePath(ROUTES.publicShare, { token });
@@ -20,6 +22,7 @@ function buildPublicSharePath(token: string, folderId?: string) {
 }
 
 export function PublicShare() {
+  const [previewingFile, setPreviewingFile] = useState<FileItem | null>(null);
   const { token = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const folderId = searchParams.get("folderId") ?? undefined;
@@ -47,10 +50,7 @@ export function PublicShare() {
     isBrowsable && !isAtRoot ? currentFolderId : undefined,
   );
 
-  const handleOpenFile = async (file: FileItem) => {
-    const url = await sharingService.getPublicFileDownloadUrl(token, file.id);
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const handleOpenFile = (file: FileItem) => setPreviewingFile(file);
 
   const handleDownloadFile = async (file: FileItem) => {
     const url = await sharingService.getPublicFileDownloadUrl(token, file.id);
@@ -151,6 +151,13 @@ export function PublicShare() {
             </Button>
           </div>
         </div>
+        <FilePreviewDialog
+          file={previewingFile}
+          getUrl={(fileId) =>
+            sharingService.getPublicFileDownloadUrl(token, fileId)
+          }
+          onOpenChange={(open) => !open && setPreviewingFile(null)}
+        />
       </div>
     );
   }
@@ -193,6 +200,13 @@ export function PublicShare() {
           />
         )}
       </div>
+      <FilePreviewDialog
+        file={previewingFile}
+        getUrl={(fileId) =>
+          sharingService.getPublicFileDownloadUrl(token, fileId)
+        }
+        onOpenChange={(open) => !open && setPreviewingFile(null)}
+      />
     </div>
   );
 }

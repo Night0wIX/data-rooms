@@ -11,6 +11,10 @@ import { useDataRooms } from "@/features/data-room/hooks/use-data-rooms";
 import { useSharedDataRooms } from "@/features/data-room/hooks/use-shared-data-rooms";
 import { Button } from "@/shared/ui/button/button";
 import type { DataRoom } from "@/features/data-room/api/data-room.types";
+import {
+  ShareDialog,
+  type ShareTarget,
+} from "@/features/sharing/ui/share-dialog";
 
 export function DataRooms() {
   const {
@@ -33,6 +37,7 @@ export function DataRooms() {
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<DataRoom | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DataRoom | null>(null);
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
 
   const dataRooms = data?.pages.flatMap((page) => page.items) ?? [];
 
@@ -74,6 +79,13 @@ export function DataRooms() {
                   key={dataRoom.id}
                   dataRoom={dataRoom}
                   onRename={setRenameTarget}
+                  onShare={(dr) =>
+                    setShareTarget({
+                      resourceType: "DATA_ROOM",
+                      resourceId: dr.id,
+                      resourceName: dr.name,
+                    })
+                  }
                   onDelete={setDeleteTarget}
                 />
               ))}
@@ -124,6 +136,11 @@ export function DataRooms() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
+      />
+
+      <ShareDialog
+        target={shareTarget}
+        onOpenChange={(open) => !open && setShareTarget(null)}
       />
     </div>
   );

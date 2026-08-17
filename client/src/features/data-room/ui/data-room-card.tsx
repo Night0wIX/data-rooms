@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Folder, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Folder, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/utils/cn";
 import type { DataRoom, SharedDataRoom } from "../api/data-room.types";
@@ -13,6 +13,7 @@ import {
 interface DataRoomCardProps {
   dataRoom: DataRoom | SharedDataRoom;
   onRename?: (dataRoom: DataRoom) => void;
+  onShare?: (dataRoom: DataRoom) => void;
   onDelete?: (dataRoom: DataRoom) => void;
 }
 
@@ -29,9 +30,10 @@ function getCardHref(dataRoom: DataRoom | SharedDataRoom): string {
 export function DataRoomCard({
   dataRoom,
   onRename,
+  onShare,
   onDelete,
 }: DataRoomCardProps) {
-  const hasActions = Boolean(onRename || onDelete);
+  const hasActions = Boolean(onRename || onShare || onDelete);
   const href = getCardHref(dataRoom);
 
   return (
@@ -75,6 +77,12 @@ export function DataRoomCard({
                 <DropdownMenuItem onSelect={() => onRename(dataRoom)}>
                   <Pencil className="size-4" />
                   Rename
+                </DropdownMenuItem>
+              )}
+              {onShare && (
+                <DropdownMenuItem onSelect={() => onShare(dataRoom)}>
+                  <Share2 className="size-4" />
+                  Share
                 </DropdownMenuItem>
               )}
               {onDelete && (

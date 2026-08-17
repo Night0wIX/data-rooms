@@ -10,6 +10,6 @@ import { SharingController } from "./sharing.controller.js";
   imports: [DatabaseModule, FileStorageModule],
   controllers: [SharingController],
   providers: [SharingService, SharingRepository, AccessService],
-  exports: [AccessService],
+  exports: [AccessService, SharingRepository],
 })
 export class SharingModule {}

@@ -35,6 +35,14 @@ export class FileRepository {
     return this.databaseService.file.findUnique({ where: { id: fileId } });
   }
 
+  findFilesByDataRoomId(dataRoomId: string) {
+    return this.databaseService.file.findMany({ where: { dataRoomId } });
+  }
+
+  deleteManyByDataRoomId(dataRoomId: string) {
+    return this.databaseService.file.deleteMany({ where: { dataRoomId } });
+  }
+
   findFileByFolderAndName(input: { folderId: string; displayName: string }) {
     return this.databaseService.file.findFirst({
       where: { folderId: input.folderId, displayName: input.displayName },

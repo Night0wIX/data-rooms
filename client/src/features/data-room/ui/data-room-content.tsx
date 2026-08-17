@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DataRoomContentRow } from "./data-room-content-row";
 import { Button } from "@/shared/ui/button/button";
 import {
@@ -30,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog/alert-dialog";
 import { formatBytes } from "@/shared/utils/format-bytes";
+import { folderService } from "@/features/folder/api/folder.service";
 import type { Folder as FolderEntity } from "@/features/folder/api/folder.types";
 import type { FileItem } from "@/features/file/api/file.types";
 
@@ -76,6 +78,15 @@ export function DataRoomContent({
     null,
   );
 
+  const { data: deletionPreview, isPending: isPreviewPending } = useQuery({
+    queryKey: ["folders", "deletion-preview", pendingDelete?.item.id],
+    queryFn: () =>
+      folderService.getDeletionPreview(
+        (pendingDelete as { type: "folder"; item: FolderEntity }).item.id,
+      ),
+    enabled: pendingDelete?.type === "folder",
+  });
+
   const isEmpty = folders.length === 0 && files.length === 0;
 
   if (isEmpty) {
@@ -102,6 +113,38 @@ export function DataRoomContent({
     if (pendingDelete.type === "folder") onDeleteFolder?.(pendingDelete.item);
     else onDeleteFile?.(pendingDelete.item);
     setPendingDelete(null);
+  };
+
+  const renderDeleteDescription = () => {
+    if (!pendingDelete) return null;
+
+    if (pendingDelete.type === "file") {
+      return "This permanently deletes the file. This can't be undone.";
+    }
+
+    if (isPreviewPending) {
+      return "Checking what's inside this folder…";
+    }
+
+    if (!deletionPreview) {
+      return "This permanently deletes the folder and everything inside it. This can't be undone.";
+    }
+
+    const { folderCount, fileCount } = deletionPreview;
+
+    if (folderCount === 0 && fileCount === 0) {
+      return "This folder is empty. Deleting it can't be undone.";
+    }
+
+    const parts: string[] = [];
+    if (fileCount > 0) {
+      parts.push(`${fileCount} file${fileCount === 1 ? "" : "s"}`);
+    }
+    if (folderCount > 0) {
+      parts.push(`${folderCount} folder${folderCount === 1 ? "" : "s"}`);
+    }
+
+    return `This will permanently delete ${parts.join(" and ")} inside this folder. This can't be undone.`;
   };
 
   return (
@@ -228,12 +271,7 @@ export function DataRoomContent({
               &rdquo;?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete?.type === "folder"
-                ? // TODO: wire this up to GET /folders/:id/deletion-preview so it
-                  // reads "This will permanently delete 12 files and 3 folders."
-                  // per the functional requirement to warn with affected counts.
-                  "This permanently deletes the folder and everything inside it. This can't be undone."
-                : "This permanently deletes the file. This can't be undone."}
+              {renderDeleteDescription()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

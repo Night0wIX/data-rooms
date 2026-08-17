@@ -43,7 +43,7 @@ export function DataRoomContentRow({
   );
 
   const nameClassName =
-    "min-w-0 flex-1 rounded-sm px-1 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-70";
+    "min-w-0 flex-1 cursor-pointer rounded-sm px-1 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-70";
 
   return (
     <div className="flex items-center gap-3 rounded-md px-3 py-3 transition-colors hover:bg-muted/50 focus-within:bg-muted/50">

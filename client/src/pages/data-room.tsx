@@ -6,18 +6,25 @@ import { Skeleton } from "@/shared/ui/skeleton/skeleton";
 import { Breadcrumb } from "@/shared/ui/breadcrumb";
 import { useDataRoom } from "@/features/data-room/hooks/use-data-room";
 import { useFolders } from "@/features/folder/hooks/use-folders";
+import { useDeleteFolder } from "@/features/folder/hooks/use-delete-folder";
 import { useFiles } from "@/features/file/hooks/use-files";
+import { useDeleteFile } from "@/features/file/hooks/use-delete-file";
 import { fileService } from "@/features/file/api/file.service";
 import { DataRoomSearch } from "@/features/data-room/ui/data-room-search";
 import { DataRoomContent } from "@/features/data-room/ui/data-room-content";
 import { DataRoomContentSkeleton } from "@/features/data-room/ui/data-room-content-skeleton";
 import { CreateFolderDialog } from "@/features/folder/ui/create-folder-dialog";
+import { RenameFolderDialog } from "@/features/folder/ui/rename-folder-dialog";
+import { RenameFileDialog } from "@/features/file/ui/rename-file-dialog";
+import { MoveFileDialog } from "@/features/file/ui/move-file-dialog";
 import type { FileItem } from "@/features/file/api/file.types";
+import type { Folder } from "@/features/folder/api/folder.types";
 import { ROUTES } from "@/shared/constants/routes";
 import {
   ShareDialog,
   type ShareTarget,
 } from "@/features/sharing/ui/share-dialog";
+import { FilePreviewDialog } from "@/features/file/ui/file-preview-dialog";
 
 const DATA_ROOMS_BREADCRUMB_ID = "data-rooms";
 
@@ -27,7 +34,10 @@ export function DataRoom() {
 
   const [search, setSearch] = useState("");
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
-
+  const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
+  const [renamingFile, setRenamingFile] = useState<FileItem | null>(null);
+  const [movingFile, setMovingFile] = useState<FileItem | null>(null);
+  const [previewingFile, setPreviewingFile] = useState<FileItem | null>(null);
   const {
     data: dataRoom,
     isPending: isDataRoomPending,
@@ -40,15 +50,19 @@ export function DataRoom() {
     refetch: refetchFolders,
   } = useFolders({ dataRoomId });
 
-  const { data: files = [], isPending: areFilesPending } = useFiles({
+  const { data: allFiles = [], isPending: areFilesPending } = useFiles({
     dataRoomId,
     ...(search && { searchByName: search }),
   });
 
-  const handleOpenFile = async (file: FileItem) => {
-    const url = await fileService.getDownloadUrl(file.id);
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const files = search ? allFiles : allFiles.filter((file) => !file.folderId);
+
+  const displayedFolders = search ? [] : folders;
+
+  const deleteFolder = useDeleteFolder();
+  const deleteFile = useDeleteFile();
+
+  const handleOpenFile = (file: FileItem) => setPreviewingFile(file);
 
   const handleDownloadFile = async (file: FileItem) => {
     const url = await fileService.getDownloadUrl(file.id);
@@ -172,12 +186,13 @@ export function DataRoom() {
         ) : (
           <DataRoomContent
             dataRoomId={dataRoomId}
-            folders={folders}
+            folders={displayedFolders}
             files={files}
             searchQuery={search}
             readOnly={isReadOnly}
             onOpenFile={handleOpenFile}
             onDownloadFile={handleDownloadFile}
+            onRenameFolder={setRenamingFolder}
             onShareFolder={(folder) =>
               setShareTarget({
                 resourceType: "FOLDER",
@@ -185,6 +200,9 @@ export function DataRoom() {
                 resourceName: folder.name,
               })
             }
+            onDeleteFolder={(folder) => deleteFolder.mutate(folder.id)}
+            onRenameFile={setRenamingFile}
+            onMoveFile={setMovingFile}
             onShareFile={(file) =>
               setShareTarget({
                 resourceType: "FILE",
@@ -192,12 +210,33 @@ export function DataRoom() {
                 resourceName: file.displayName,
               })
             }
+            onDeleteFile={(file) => deleteFile.mutate(file.id)}
           />
         )}
       </div>
+
+      <RenameFolderDialog
+        folder={renamingFolder}
+        existingNames={folders.map((f) => f.name)}
+        onOpenChange={(open) => !open && setRenamingFolder(null)}
+      />
+      <RenameFileDialog
+        file={renamingFile}
+        existingNames={files.map((f) => f.displayName)}
+        onOpenChange={(open) => !open && setRenamingFile(null)}
+      />
+      <MoveFileDialog
+        file={movingFile}
+        onOpenChange={(open) => !open && setMovingFile(null)}
+      />
       <ShareDialog
         target={shareTarget}
         onOpenChange={(open) => !open && setShareTarget(null)}
+      />
+      <FilePreviewDialog
+        file={previewingFile}
+        getUrl={(fileId) => fileService.getDownloadUrl(fileId)}
+        onOpenChange={(open) => !open && setPreviewingFile(null)}
       />
     </div>
   );

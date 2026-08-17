@@ -74,6 +74,16 @@ export class SharingRepository {
     });
   }
 
+  async deleteManyByResource(
+    resourceType: ShareResourceType,
+    resourceIds: string[],
+  ): Promise<void> {
+    if (resourceIds.length === 0) return;
+    await this.databaseService.share.deleteMany({
+      where: { resourceType, resourceId: { in: resourceIds } },
+    });
+  }
+
   revokeShare(shareId: string) {
     return this.databaseService.share.update({
       where: { id: shareId },

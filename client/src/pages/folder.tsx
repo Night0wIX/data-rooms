@@ -27,6 +27,7 @@ import {
   ShareDialog,
   type ShareTarget,
 } from "@/features/sharing/ui/share-dialog";
+import { FilePreviewDialog } from "@/features/file/ui/file-preview-dialog";
 
 const DATA_ROOMS_BREADCRUMB_ID = "data-rooms";
 
@@ -47,7 +48,7 @@ export function Folder() {
   const [movingFile, setMovingFile] = useState<FileItem | null>(null);
   const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
-
+  const [previewingFile, setPreviewingFile] = useState<FileItem | null>(null);
   const { data: dataRoom, isPending: isDataRoomPending } =
     useDataRoom(dataRoomId);
 
@@ -66,7 +67,7 @@ export function Folder() {
   } = useFolders({ dataRoomId, parentFolderId: folderId });
 
   const {
-    data: files = [],
+    data: rawFiles = [],
     isPending: areFilesPending,
     refetch: refetchFiles,
   } = useFiles({
@@ -75,14 +76,17 @@ export function Folder() {
     ...(search && { searchByName: search }),
   });
 
+  const files = search
+    ? rawFiles
+    : rawFiles.filter((file) => file.folderId === folderId);
+
+  const displayedSubfolders = search ? [] : subfolders;
+
   const uploadFile = useUploadFile(folderId);
   const deleteFile = useDeleteFile();
   const deleteFolder = useDeleteFolder();
 
-  const handleOpenFile = async (file: FileItem) => {
-    const url = await fileService.getDownloadUrl(file.id);
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+  const handleOpenFile = (file: FileItem) => setPreviewingFile(file);
 
   const handleDownloadFile = async (file: FileItem) => {
     const url = await fileService.getDownloadUrl(file.id);
@@ -216,7 +220,7 @@ export function Folder() {
         ) : (
           <DataRoomContent
             dataRoomId={dataRoomId}
-            folders={subfolders}
+            folders={displayedSubfolders}
             files={files}
             searchQuery={search}
             readOnly={isReadOnly}
@@ -262,6 +266,11 @@ export function Folder() {
       <ShareDialog
         target={shareTarget}
         onOpenChange={(open) => !open && setShareTarget(null)}
+      />
+      <FilePreviewDialog
+        file={previewingFile}
+        getUrl={(fileId) => fileService.getDownloadUrl(fileId)}
+        onOpenChange={(open) => !open && setPreviewingFile(null)}
       />
     </div>
   );

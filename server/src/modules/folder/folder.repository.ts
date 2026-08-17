@@ -122,6 +122,16 @@ export class FolderRepository {
     }));
   }
 
+  findFolderIdsByDataRoomId(dataRoomId: string) {
+    return this.databaseService.folder
+      .findMany({ where: { dataRoomId }, select: { id: true } })
+      .then((rows) => rows.map((r) => r.id));
+  }
+
+  deleteManyByDataRoomId(dataRoomId: string) {
+    return this.databaseService.folder.deleteMany({ where: { dataRoomId } });
+  }
+
   async computeFolderSubtreeStatistics(folderId: string): Promise<{
     fileCount: number;
     totalSizeBytes: bigint;

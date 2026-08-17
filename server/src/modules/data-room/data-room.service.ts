@@ -7,8 +7,11 @@ import { DataRoomListResponseDto } from "./dto/data-room-list-response.dto.js";
 import { UpdateDataRoomDto } from "./dto/update-data-room.dto.js";
 import { ShareResourceType } from "@/generated/prisma/enums.js";
 import { AccessService } from "@/modules/sharing/index.js";
+import { SharingRepository } from "@/modules/sharing/sharing.repository.js";
 import { SharedDataRoomResponseDto } from "./dto/shared-data-room-response.dto.js";
 import { DatabaseService } from "@/core/database/database.service.js";
+import { FolderService } from "@/modules/folder/folder.service.js";
+import { FileService } from "@/modules/file/file.service.js";
 
 const DATA_ROOMS_PAGE_SIZE = 20;
 
@@ -18,6 +21,9 @@ export class DataRoomService {
     private readonly dataRoomRepository: DataRoomRepository,
     private readonly accessService: AccessService,
     private readonly databaseService: DatabaseService,
+    private readonly folderService: FolderService,
+    private readonly fileService: FileService,
+    private readonly sharingRepository: SharingRepository,
   ) {}
 
   async createDataRoom(
@@ -50,11 +56,6 @@ export class DataRoomService {
   ): Promise<DataRoomResponseDto> {
     const dataRoom = await this.findAccessibleDataRoomOrThrow(dataRoomId, requestingUserId);
 
-    // Strict role for root-level actions (New folder, Share Data Room).
-    // Falls back to "VIEWER" (read-only) when the user has no direct
-    // DATA_ROOM-level share — e.g. someone who only has a nested folder
-    // share can see this data room's name (breadcrumb) but cannot act
-    // on its root, so the UI should treat them as read-only here.
     const role = await this.accessService.getUserRole(
       ShareResourceType.DATA_ROOM,
       dataRoomId,
@@ -82,6 +83,14 @@ export class DataRoomService {
   async deleteDataRoom(dataRoomId: string, requestingUserId: string): Promise<void> {
     await this.findOwnedDataRoomOrThrow(dataRoomId, requestingUserId);
 
+    const folderIds = await this.folderService.findFolderIdsInDataRoom(dataRoomId);
+    const fileIds = await this.fileService.deleteFilesInDataRoom(dataRoomId);
+
+    await this.sharingRepository.deleteManyByResource(ShareResourceType.FILE, fileIds);
+    await this.sharingRepository.deleteManyByResource(ShareResourceType.FOLDER, folderIds);
+    await this.sharingRepository.deleteManyByResource(ShareResourceType.DATA_ROOM, [dataRoomId]);
+
+    await this.folderService.deleteFoldersInDataRoom(dataRoomId);
     await this.dataRoomRepository.deleteDataRoom(dataRoomId);
   }
 
@@ -92,11 +101,6 @@ export class DataRoomService {
       throw new NotFoundException("Data room not found");
     }
 
-    // Metadata-level visibility (name/description for breadcrumbs etc.)
-    // is granted to anyone with ANY active share into this data room,
-    // not just a DATA_ROOM-level share. This does NOT grant access to
-    // root folders/files — that's enforced separately in FolderService /
-    // FileService via assertCanView({ resourceType: DATA_ROOM }).
     await this.accessService.assertDataRoomVisible(dataRoomId, requestingUserId);
 
     return dataRoom;
@@ -105,10 +109,6 @@ export class DataRoomService {
   async listSharedDataRooms(requestingUserId: string): Promise<SharedDataRoomResponseDto[]> {
     const entries = await this.accessService.listAccessibleEntryPointsForUser(requestingUserId);
 
-    // A data room can have several shares pointing into it (e.g. two
-    // different folders shared separately). Keep one entry point per data
-    // room — prefer a DATA_ROOM-level share when present, since it grants
-    // the broadest access and makes the most useful landing page.
     const entryByDataRoomId = new Map<string, (typeof entries)[number]>();
     for (const entry of entries) {
       const existing = entryByDataRoomId.get(entry.dataRoomId);

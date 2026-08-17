@@ -8,12 +8,16 @@ import { BreadcrumbItemDto } from "./dto/breadcrumb-item.dto.js";
 import { UpdateFolderDto } from "./dto/update-folder.dto.js";
 import { ShareResourceType } from "@/generated/prisma/enums.js";
 import { AccessService } from "@/modules/sharing/index.js";
+import { SharingRepository } from "@/modules/sharing/sharing.repository.js";
+import { FileService } from "@/modules/file/file.service.js";
 
 @Injectable()
 export class FolderService {
   constructor(
     private readonly folderRepository: FolderRepository,
     private readonly accessService: AccessService,
+    private readonly fileService: FileService,
+    private readonly sharingRepository: SharingRepository,
   ) {}
 
   async createFolder(
@@ -48,10 +52,6 @@ export class FolderService {
     const parentId = listFoldersQueryDto.parentFolderId ?? null;
 
     if (parentId) {
-      // Listing children of a specific folder — access is checked
-      // against that folder, so a folder-level share (or a share on an
-      // ancestor/descendant folder) is enough. Also validates the
-      // parent belongs to the given data room.
       await this.findFolderInDataRoomOrThrow(parentId, listFoldersQueryDto.dataRoomId);
       await this.accessService.assertCanView({
         userId: requestingUserId,
@@ -59,8 +59,6 @@ export class FolderService {
         resourceId: parentId,
       });
     } else {
-      // Listing the data room's root — requires a direct DATA_ROOM-level
-      // share (or ownership). A folder-level share does NOT unlock this.
       await this.accessService.assertCanView({
         userId: requestingUserId,
         resourceType: ShareResourceType.DATA_ROOM,
@@ -160,11 +158,30 @@ export class FolderService {
     return this.folderRepository.findSubtreeFolderIds(folderId);
   }
 
+  async deleteFolder(folderId: string, requestingUserId: string): Promise<void> {
+    const folderIds = await this.prepareFolderDeletion(folderId, requestingUserId);
+
+    const fileIds = await this.fileService.deleteFilesInFolders(folderIds);
+
+    await this.sharingRepository.deleteManyByResource(ShareResourceType.FILE, fileIds);
+    await this.sharingRepository.deleteManyByResource(ShareResourceType.FOLDER, folderIds);
+
+    await this.deleteFolderRecords(folderIds);
+  }
+
   async deleteFolderRecords(folderIds: string[]): Promise<void> {
     // Deepest folders first to satisfy the Restrict FK from child to parent.
     for (const folderId of [...folderIds].reverse()) {
       await this.folderRepository.deleteFolderById(folderId);
     }
+  }
+
+  async findFolderIdsInDataRoom(dataRoomId: string): Promise<string[]> {
+    return this.folderRepository.findFolderIdsByDataRoomId(dataRoomId);
+  }
+
+  async deleteFoldersInDataRoom(dataRoomId: string): Promise<void> {
+    await this.folderRepository.deleteManyByDataRoomId(dataRoomId);
   }
 
   private async findFolderInDataRoomOrThrow(folderId: string, dataRoomId: string) {

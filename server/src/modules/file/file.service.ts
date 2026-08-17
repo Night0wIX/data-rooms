@@ -162,15 +162,7 @@ export class FileService {
     await this.fileRepository.deleteFileById(fileId);
   }
 
-  /**
-   * Deletes every file belonging to the given folder ids (a folder subtree),
-   * removing storage objects first and DB records second. Used by the
-   * folder deletion flow. Access is already validated by the caller
-   * (FolderController), since this runs as part of a folder-delete
-   * operation on folders whose ids were resolved from an already-authorized
-   * subtree.
-   */
-  async deleteFilesInFolders(folderIds: string[]): Promise<void> {
+  async deleteFilesInFolders(folderIds: string[]): Promise<string[]> {
     const files = await this.fileRepository.deleteFilesByFolderIds(folderIds);
 
     for (const file of files) {
@@ -178,6 +170,20 @@ export class FileService {
     }
 
     await this.fileRepository.deleteManyByFolderIds(folderIds);
+
+    return files.map((file) => file.id);
+  }
+
+  async deleteFilesInDataRoom(dataRoomId: string): Promise<string[]> {
+    const files = await this.fileRepository.findFilesByDataRoomId(dataRoomId);
+
+    for (const file of files) {
+      await this.fileStorageService.deleteObject(file.storageKey);
+    }
+
+    await this.fileRepository.deleteManyByDataRoomId(dataRoomId);
+
+    return files.map((file) => file.id);
   }
 
   private async findViewableFileOrThrow(fileId: string, requestingUserId: string) {
