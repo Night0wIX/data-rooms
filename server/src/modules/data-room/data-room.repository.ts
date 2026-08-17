@@ -9,10 +9,7 @@ const DATA_ROOMS_PAGE_SIZE = 20;
 export class DataRoomRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  createDataRoom(
-    ownerId: string,
-    createDataRoomDto: CreateDataRoomDto,
-  ) {
+  createDataRoom(ownerId: string, createDataRoomDto: CreateDataRoomDto) {
     return this.databaseService.dataRoom.create({
       data: {
         ...createDataRoomDto,
@@ -21,10 +18,7 @@ export class DataRoomRepository {
     });
   }
 
-  findDataRoomsByOwnerId(
-    ownerId: string,
-    cursor?: string,
-  ) {
+  findDataRoomsByOwnerId(ownerId: string, cursor?: string) {
     return this.databaseService.dataRoom.findMany({
       where: {
         ownerId,
@@ -57,10 +51,7 @@ export class DataRoomRepository {
     });
   }
 
-  updateDataRoom(
-    dataRoomId: string,
-    updateDataRoomDto: UpdateDataRoomDto,
-  ) {
+  updateDataRoom(dataRoomId: string, updateDataRoomDto: UpdateDataRoomDto) {
     return this.databaseService.dataRoom.update({
       where: {
         id: dataRoomId,
@@ -74,6 +65,17 @@ export class DataRoomRepository {
       where: {
         id: dataRoomId,
       },
+    });
+  }
+
+  findDataRoomsByIds(dataRoomIds: string[]) {
+    if (dataRoomIds.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    return this.databaseService.dataRoom.findMany({
+      where: { id: { in: dataRoomIds } },
+      orderBy: { createdAt: "desc" },
     });
   }
 }

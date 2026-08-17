@@ -68,6 +68,9 @@ export class SharingRepository {
     return this.databaseService.share.findMany({
       where: { resourceType, resourceId, revokedAt: null },
       orderBy: { createdAt: "desc" },
+      include: {
+        sharedWithUser: { select: { email: true } },
+      },
     });
   }
 

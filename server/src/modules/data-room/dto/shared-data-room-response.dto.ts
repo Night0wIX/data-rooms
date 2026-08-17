@@ -1,6 +1,6 @@
 import { Expose } from "class-transformer";
 
-export class DataRoomResponseDto {
+export class SharedDataRoomResponseDto {
   @Expose()
   id!: string;
 
@@ -20,5 +20,8 @@ export class DataRoomResponseDto {
   updatedAt!: Date;
 
   @Expose()
-  role!: "OWNER" | "EDITOR" | "VIEWER";
+  entryResourceType!: "DATA_ROOM" | "FOLDER";
+
+  @Expose()
+  entryResourceId!: string;
 }

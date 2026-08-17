@@ -84,14 +84,21 @@ export class FileService {
     requestingUserId: string,
     listFilesQueryDto: ListFilesQueryDto,
   ): Promise<FileResponseDto[]> {
-    await this.accessService.assertCanView({
-      userId: requestingUserId,
-      resourceType: ShareResourceType.DATA_ROOM,
-      resourceId: listFilesQueryDto.dataRoomId,
-    });
+    if (listFilesQueryDto.folderId) {
+      await this.accessService.assertCanView({
+        userId: requestingUserId,
+        resourceType: ShareResourceType.FOLDER,
+        resourceId: listFilesQueryDto.folderId,
+      });
+    } else {
+      await this.accessService.assertCanView({
+        userId: requestingUserId,
+        resourceType: ShareResourceType.DATA_ROOM,
+        resourceId: listFilesQueryDto.dataRoomId,
+      });
+    }
 
     const files = await this.fileRepository.listFiles(listFilesQueryDto);
-
     return files.map((file) => this.toResponseDto(file));
   }
 

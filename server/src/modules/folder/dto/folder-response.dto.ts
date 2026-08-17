@@ -18,4 +18,7 @@ export class FolderResponseDto {
 
   @Expose()
   updatedAt!: Date;
+
+  @Expose()
+  role!: "OWNER" | "EDITOR" | "VIEWER";
 }

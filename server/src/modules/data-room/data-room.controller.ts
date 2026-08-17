@@ -16,24 +16,20 @@ import { ROUTES } from "@/shared/constants/index.js";
 import { DataRoomService } from "./data-room.service.js";
 import { DataRoomResponseDto } from "./dto/data-room-response.dto.js";
 import { DataRoomListResponseDto } from "./dto/data-room-list-response.dto.js";
+import { SharedDataRoomResponseDto } from "./dto/shared-data-room-response.dto.js";
 import { CreateDataRoomDto } from "./dto/create-data-room.dto.js";
 import { UpdateDataRoomDto } from "./dto/update-data-room.dto.js";
 
 @Controller(ROUTES.dataRooms.root)
 export class DataRoomController {
-  constructor(
-    private readonly dataRoomService: DataRoomService,
-  ) {}
+  constructor(private readonly dataRoomService: DataRoomService) {}
 
   @Post()
   createDataRoom(
     @CurrentUser() authenticatedUser: AuthenticatedUser,
     @Body() createDataRoomDto: CreateDataRoomDto,
   ): Promise<DataRoomResponseDto> {
-    return this.dataRoomService.createDataRoom(
-      authenticatedUser.id,
-      createDataRoomDto,
-    );
+    return this.dataRoomService.createDataRoom(authenticatedUser.id, createDataRoomDto);
   }
 
   @Get()
@@ -41,10 +37,14 @@ export class DataRoomController {
     @CurrentUser() authenticatedUser: AuthenticatedUser,
     @Query("cursor") cursor?: string,
   ): Promise<DataRoomListResponseDto> {
-    return this.dataRoomService.listDataRoomsForOwner(
-      authenticatedUser.id,
-      cursor,
-    );
+    return this.dataRoomService.listDataRoomsForOwner(authenticatedUser.id, cursor);
+  }
+
+  @Get(ROUTES.dataRooms.shared)
+  listSharedDataRooms(
+    @CurrentUser() authenticatedUser: AuthenticatedUser,
+  ): Promise<SharedDataRoomResponseDto[]> {
+    return this.dataRoomService.listSharedDataRooms(authenticatedUser.id);
   }
 
   @Get(ROUTES.dataRooms.byId)
@@ -52,10 +52,7 @@ export class DataRoomController {
     @Param("dataRoomId") dataRoomId: string,
     @CurrentUser() authenticatedUser: AuthenticatedUser,
   ): Promise<DataRoomResponseDto> {
-    return this.dataRoomService.getDataRoomById(
-      dataRoomId,
-      authenticatedUser.id,
-    );
+    return this.dataRoomService.getDataRoomById(dataRoomId, authenticatedUser.id);
   }
 
   @Patch(ROUTES.dataRooms.byId)
@@ -64,11 +61,7 @@ export class DataRoomController {
     @CurrentUser() authenticatedUser: AuthenticatedUser,
     @Body() updateDataRoomDto: UpdateDataRoomDto,
   ): Promise<DataRoomResponseDto> {
-    return this.dataRoomService.updateDataRoom(
-      dataRoomId,
-      authenticatedUser.id,
-      updateDataRoomDto,
-    );
+    return this.dataRoomService.updateDataRoom(dataRoomId, authenticatedUser.id, updateDataRoomDto);
   }
 
   @Delete(ROUTES.dataRooms.byId)
@@ -77,9 +70,6 @@ export class DataRoomController {
     @Param("dataRoomId") dataRoomId: string,
     @CurrentUser() authenticatedUser: AuthenticatedUser,
   ): Promise<void> {
-    return this.dataRoomService.deleteDataRoom(
-      dataRoomId,
-      authenticatedUser.id,
-    );
+    return this.dataRoomService.deleteDataRoom(dataRoomId, authenticatedUser.id);
   }
 }

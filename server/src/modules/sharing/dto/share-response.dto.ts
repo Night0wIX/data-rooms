@@ -28,4 +28,7 @@ export class ShareResponseDto {
 
   @Expose()
   revokedAt!: Date | null;
+
+  @Expose()
+  sharedWithUserEmail!: string | null;
 }

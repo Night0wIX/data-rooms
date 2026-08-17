@@ -7,6 +7,7 @@ export const ROUTES = {
   },
   dataRooms: {
     root: "data-rooms",
+    shared: "shared",
     byId: ":dataRoomId",
   },
   folders: {
@@ -27,5 +28,8 @@ export const ROUTES = {
     root: "share",
     byId: ":shareId",
     byToken: "public/:token",
+    tokenContents: "public/:token/contents",
+    tokenBreadcrumb: "public/:token/breadcrumb",
+    tokenFileDownloadUrl: "public/:token/files/:fileId/download-url",
   },
 } as const;

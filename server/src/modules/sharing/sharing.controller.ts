@@ -18,6 +18,9 @@ import { ShareResourceType } from "./access/access.types.js";
 import { ShareResponseDto } from "./dto/share-response.dto.js";
 import { CreateShareDto } from "./dto/create-share.dto.js";
 import { SharedResourceResponseDto } from "./dto/shared-resource-response.dto.js";
+import { BreadcrumbItemDto } from "../folder/dto/breadcrumb-item.dto.js";
+import { DownloadUrlResponseDto } from "../file/dto/download-url-response.dto.js";
+import { PublicContentsResponseDto } from "./dto/public-contents-response.dto.js";
 
 @Controller(ROUTES.share.root)
 export class SharingController {
@@ -53,5 +56,32 @@ export class SharingController {
   @Get(ROUTES.share.byToken)
   resolveSharedResource(@Param("token") token: string): Promise<SharedResourceResponseDto> {
     return this.sharingService.resolveSharedResourceByToken(token);
+  }
+
+  @Public()
+  @Get(ROUTES.share.tokenContents)
+  getPublicContents(
+    @Param("token") token: string,
+    @Query("folderId") folderId?: string,
+  ): Promise<PublicContentsResponseDto> {
+    return this.sharingService.getPublicContents(token, folderId);
+  }
+
+  @Public()
+  @Get(ROUTES.share.tokenBreadcrumb)
+  getPublicBreadcrumb(
+    @Param("token") token: string,
+    @Query("folderId") folderId: string,
+  ): Promise<BreadcrumbItemDto[]> {
+    return this.sharingService.getPublicBreadcrumb(token, folderId);
+  }
+
+  @Public()
+  @Get(ROUTES.share.tokenFileDownloadUrl)
+  getPublicFileDownloadUrl(
+    @Param("token") token: string,
+    @Param("fileId") fileId: string,
+  ): Promise<DownloadUrlResponseDto> {
+    return this.sharingService.getPublicFileDownloadUrl(token, fileId);
   }
 }

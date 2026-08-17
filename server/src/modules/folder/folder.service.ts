@@ -38,23 +38,34 @@ export class FolderService {
       name: createFolderDto.name,
     });
 
-    return this.toResponseDto(folder);
+    return this.toResponseDto({ ...folder, role: "EDITOR" as const });
   }
 
   async listFolders(
     requestingUserId: string,
     listFoldersQueryDto: ListFoldersQueryDto,
   ): Promise<FolderResponseDto[]> {
-    await this.accessService.assertCanView({
-      userId: requestingUserId,
-      resourceType: ShareResourceType.DATA_ROOM,
-      resourceId: listFoldersQueryDto.dataRoomId,
-    });
-
     const parentId = listFoldersQueryDto.parentFolderId ?? null;
 
     if (parentId) {
+      // Listing children of a specific folder — access is checked
+      // against that folder, so a folder-level share (or a share on an
+      // ancestor/descendant folder) is enough. Also validates the
+      // parent belongs to the given data room.
       await this.findFolderInDataRoomOrThrow(parentId, listFoldersQueryDto.dataRoomId);
+      await this.accessService.assertCanView({
+        userId: requestingUserId,
+        resourceType: ShareResourceType.FOLDER,
+        resourceId: parentId,
+      });
+    } else {
+      // Listing the data room's root — requires a direct DATA_ROOM-level
+      // share (or ownership). A folder-level share does NOT unlock this.
+      await this.accessService.assertCanView({
+        userId: requestingUserId,
+        resourceType: ShareResourceType.DATA_ROOM,
+        resourceId: listFoldersQueryDto.dataRoomId,
+      });
     }
 
     const folders =
@@ -62,13 +73,30 @@ export class FolderService {
         ? await this.folderRepository.findRootFoldersByDataRoomId(listFoldersQueryDto.dataRoomId)
         : await this.folderRepository.findChildFolders(parentId);
 
-    return folders.map((folder) => this.toResponseDto(folder));
+    const foldersWithRoles = await Promise.all(
+      folders.map(async (folder) => {
+        const role = await this.accessService.getUserRole(
+          ShareResourceType.FOLDER,
+          folder.id,
+          requestingUserId,
+        );
+        return { ...folder, role: role ?? "VIEWER" };
+      }),
+    );
+
+    return foldersWithRoles.map((folder) => this.toResponseDto(folder));
   }
 
   async getFolderById(folderId: string, requestingUserId: string): Promise<FolderResponseDto> {
     const folder = await this.findViewableFolderOrThrow(folderId, requestingUserId);
 
-    return this.toResponseDto(folder);
+    const role = await this.accessService.getUserRole(
+      ShareResourceType.FOLDER,
+      folderId,
+      requestingUserId,
+    );
+
+    return this.toResponseDto({ ...folder, role: role ?? "VIEWER" });
   }
 
   async getFolderBreadcrumb(
@@ -103,7 +131,7 @@ export class FolderService {
       updateFolderDto.name,
     );
 
-    return this.toResponseDto(updatedFolder);
+    return this.toResponseDto({ ...updatedFolder, role: "EDITOR" as const });
   }
 
   /**
