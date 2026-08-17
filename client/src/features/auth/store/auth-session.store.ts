@@ -22,14 +22,6 @@ supabase.auth.getSession().then(({ data }) => {
 
 supabase.auth.onAuthStateChange((_event, session) => {
   setSnapshot({ session, isInitializing: false });
-
-  if (window.location.hash) {
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search,
-    );
-  }
 });
 
 export function subscribeToAuthSession(listener: Listener): () => void {
