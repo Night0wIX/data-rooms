@@ -27,7 +27,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "render:build": "pnpm install --frozen-lockfile && pnpm run build",
-    "render:start": "pnpm prisma migrate deploy && node dist/main.js"
+    "render:start": "pnpm prisma migrate deploy && node dist/src/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
