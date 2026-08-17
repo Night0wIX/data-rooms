@@ -12,5 +12,5 @@ export type CatchAllPathModifier = Extract<PathSegmentModifier, "*" | "+">;
 
 export interface PathSegmentMatch {
   parameterName: string;
-  modifier?: PathSegmentModifier;
+  modifier?: PathSegmentModifier | undefined;
 }

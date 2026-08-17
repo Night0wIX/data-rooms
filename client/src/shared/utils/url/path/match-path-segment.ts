@@ -13,9 +13,13 @@ export function matchPathSegment(
 
   const [, parameterName, modifier] = match;
 
+  if (!parameterName) {
+    return undefined;
+  }
+
   return {
     parameterName,
-    modifier: modifier as PathSegmentMatch["modifier"],
+    ...(modifier ? { modifier: modifier as PathSegmentMatch["modifier"] } : {}),
   };
 }
 
