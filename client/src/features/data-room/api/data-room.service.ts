@@ -4,6 +4,7 @@ import type {
   DataRoom,
   DataRoomListResponse,
   RenameDataRoomPayload,
+  SharedDataRoom,
 } from "./data-room.types";
 
 class DataRoomService extends BaseApiService {
@@ -15,6 +16,17 @@ class DataRoomService extends BaseApiService {
     const { data } = await this.get<DataRoomListResponse>(
       this.url("/", undefined, cursor ? { cursor } : undefined),
     );
+
+    return data;
+  }
+
+  async listShared(): Promise<SharedDataRoom[]> {
+    const { data } = await this.get<SharedDataRoom[]>(this.url("/shared"));
+    return data;
+  }
+
+  async getById(id: string): Promise<DataRoom> {
+    const { data } = await this.get<DataRoom>(this.url("/:id", { id }));
 
     return data;
   }

@@ -1,4 +1,4 @@
-import { Plus, ShieldCheck } from "lucide-react";
+import { Plus, ShieldCheck, Users } from "lucide-react";
 import { useState } from "react";
 import { DataRoomCard } from "@/features/data-room/ui/data-room-card";
 import { CreateDataRoomDialog } from "@/features/data-room/ui/create-data-room-dialog";
@@ -8,6 +8,7 @@ import { DataRoomsSkeleton } from "@/features/data-room/ui/data-rooms-skeleton";
 import { DataRoomsEmptyState } from "@/features/data-room/ui/data-rooms-empty-state";
 import { DataRoomsErrorState } from "@/features/data-room/ui/data-rooms-error-state";
 import { useDataRooms } from "@/features/data-room/hooks/use-data-rooms";
+import { useSharedDataRooms } from "@/features/data-room/hooks/use-shared-data-rooms";
 import { Button } from "@/shared/ui/button/button";
 import type { DataRoom } from "@/features/data-room/api/data-room.types";
 
@@ -23,6 +24,12 @@ export function DataRooms() {
     refetch,
   } = useDataRooms();
 
+  const {
+    data: sharedDataRooms = [],
+    isPending: isSharedPending,
+    isError: isSharedError,
+  } = useSharedDataRooms();
+
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<DataRoom | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DataRoom | null>(null);
@@ -36,7 +43,6 @@ export function DataRooms() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Data Rooms
           </h1>
-
           <p className="mt-1 text-sm text-muted-foreground">
             Securely store and share due diligence documents.
           </p>
@@ -89,23 +95,34 @@ export function DataRooms() {
         )}
       </div>
 
+      {!isSharedPending && !isSharedError && sharedDataRooms.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-3 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <Users className="size-4" aria-hidden="true" />
+            Shared with you
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sharedDataRooms.map((dataRoom) => (
+              <DataRoomCard key={dataRoom.id} dataRoom={dataRoom} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <CreateDataRoomDialog open={isCreateOpen} onOpenChange={setCreateOpen} />
 
       <RenameDataRoomDialog
         dataRoom={renameTarget}
         onOpenChange={(open) => {
-          if (!open) {
-            setRenameTarget(null);
-          }
+          if (!open) setRenameTarget(null);
         }}
       />
 
       <DeleteDataRoomDialog
         dataRoom={deleteTarget}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null);
-          }
+          if (!open) setDeleteTarget(null);
         }}
       />
     </div>

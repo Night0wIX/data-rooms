@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Folder, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/utils/cn";
-import type { DataRoom } from "../api/data-room.types";
+import type { DataRoom, SharedDataRoom } from "../api/data-room.types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,22 +11,29 @@ import {
 } from "@/shared/ui/dropdown-menu";
 
 interface DataRoomCardProps {
-  dataRoom: DataRoom;
-  onRename: (dataRoom: DataRoom) => void;
-  onDelete: (dataRoom: DataRoom) => void;
+  dataRoom: DataRoom | SharedDataRoom;
+  onRename?: (dataRoom: DataRoom) => void;
+  onDelete?: (dataRoom: DataRoom) => void;
 }
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
+function getCardHref(dataRoom: DataRoom | SharedDataRoom): string {
+  if (
+    "entryResourceType" in dataRoom &&
+    dataRoom.entryResourceType === "FOLDER"
+  ) {
+    return `/data-rooms/${dataRoom.id}/folders/${dataRoom.entryResourceId}`;
+  }
+  return `/data-rooms/${dataRoom.id}`;
+}
 
 export function DataRoomCard({
   dataRoom,
   onRename,
   onDelete,
 }: DataRoomCardProps) {
+  const hasActions = Boolean(onRename || onDelete);
+  const href = getCardHref(dataRoom);
+
   return (
     <div
       className={cn(
@@ -36,7 +43,7 @@ export function DataRoomCard({
       )}
     >
       <Link
-        to={`/data-rooms/${dataRoom.id}`}
+        to={href}
         className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Open ${dataRoom.name}`}
       />
@@ -46,33 +53,42 @@ export function DataRoomCard({
           <Folder className="size-4" aria-hidden="true" />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="relative z-10 opacity-0 transition-opacity motion-reduce:transition-none group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100"
-              aria-label={`Actions for ${dataRoom.name}`}
+        {hasActions && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="relative z-10 opacity-0 transition-opacity motion-reduce:transition-none group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100"
+                aria-label={`Actions for ${dataRoom.name}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem onSelect={() => onRename(dataRoom)}>
-              <Pencil className="size-4" />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => onDelete(dataRoom)}
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {onRename && (
+                <DropdownMenuItem onSelect={() => onRename(dataRoom)}>
+                  <Pencil className="size-4" />
+                  Rename
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => onDelete(dataRoom)}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div className="mt-3 min-w-0">
@@ -88,10 +104,6 @@ export function DataRoomCard({
             : "No description"}
         </p>
       </div>
-
-      <p className="mt-3 text-xs text-muted-foreground">
-        {dateFormatter.format(new Date(dataRoom.createdAt))}
-      </p>
     </div>
   );
 }
